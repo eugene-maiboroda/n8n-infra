@@ -3,9 +3,6 @@ version: '3.8'
 networks:
   n8n-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.60.0.0/16
 
 services:
 
@@ -32,10 +29,8 @@ services:
     image: docker.n8n.io/n8nio/n8n
     container_name: n8n
     restart: unless-stopped
-
     env_file:
       - .env
-
     ports:
       - "5678:5678"
 
@@ -63,9 +58,37 @@ services:
 
     depends_on:
       - postgres-n8n
-
     networks:
       - n8n-network
-
     volumes:
       - ./volumes/n8n:/home/node/.n8n
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    env_file:
+      - .env
+    ports:
+      - "${VECTOR_DB_PORT}:6333"
+    restart: unless-stopped
+    networks:
+      - n8n-network
+    volumes:
+      - ./volumes/qdrant:/qdrant/storage
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    networks:
+      - n8n-network
+    volumes:
+      - ./volumes/ollama:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    env_file:
+      - .env
+
+
